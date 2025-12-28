@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="bs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NumericalMethods | Interpolacija</title>
+    <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="logo">
+                <i class="fas fa-calculator"></i>
+                <h1>NumericalMethods</h1>
+            </div>
+            <p class="subtitle">Numerička interpolacija</p>
+        </header>
+
+        <div class="main-grid">
+            <!-- Left Panel -->
+            <div class="panel control-panel">
+                <h2><i class="fas fa-sliders-h"></i> Kontrole</h2>
+                
+                <!-- Input - JEDAN ISPOD DRUGOG -->
+                <div class="input-group">
+                    <div class="input-vertical">
+                        <div class="input-field">
+                            <label for="xInput">X koordinata:</label>
+                            <input type="number" id="xInput" placeholder="Unesite X vrijednost" step="any">
+                        </div>
+                        <div class="input-field">
+                            <label for="yInput">Y koordinata:</label>
+                            <input type="number" id="yInput" placeholder="Unesite Y vrijednost" step="any">
+                        </div>
+                        <button class="btn btn-primary" onclick="addPoint()">
+                            <i class="fas fa-plus"></i> Dodaj tačku
+                        </button>
+                    </div>
+                    <small>Pritisni Enter za brzo dodavanje</small>
+                </div>
+
+                <!-- Method -->
+                <div class="method-select">
+                    <h3>Metoda interpolacije:</h3>
+<div class="radio-grid">
+    <!-- Prvi red -->
+    <div class="radio-row">
+        <label class="radio-btn">
+            <input type="radio" name="method" value="lagrange" checked>
+            <span>Lagrange</span>
+        </label>
+        <label class="radio-btn">
+            <input type="radio" name="method" value="newton">
+            <span>Newton</span>
+        </label>
+    </div>
+    
+    <!-- Drugi red -->
+    <div class="radio-row">
+        <label class="radio-btn">
+            <input type="radio" name="method" value="linear">
+            <span>Linearna</span>
+        </label>
+        <label class="radio-btn">
+            <input type="radio" name="method" value="spline">
+            <span>Spline</span>
+        </label>
+    </div>
+</div>
+                </div>
+
+                <!-- Actions -->
+                <div class="actions">
+                    <button class="btn btn-calculate" onclick="calculate()">
+                        <i class="fas fa-rocket"></i> Izračunaj interpolaciju
+                    </button>
+                    
+                    <div class="example-btns">
+                        <h4>Primjeri:</h4>
+                        <div class="example-row">
+                            <button class="btn btn-example" onclick="loadExample('quadratic')">
+                                <i class="fas fa-parabola"></i> Kvadratna
+                            </button>
+                            <button class="btn btn-example" onclick="loadExample('sin')">
+                                <i class="fas fa-wave-square"></i> Sinus
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Graph Panel -->
+            <div class="panel graph-panel">
+                <div class="panel-header">
+                    <h2><i class="fas fa-chart-line"></i> Grafik interpolacije</h2>
+                    <div class="stats">
+                        <span id="pointCount">0</span> tačaka
+                    </div>
+                </div>
+                <div id="plot"></div>
+                <div class="graph-info">
+                    <div class="info-item">
+                        <span>Metoda:</span>
+                        <strong id="currentMethod">-</strong>
+                    </div>
+                    <div class="info-item">
+                        <span>Status:</span>
+                        <strong id="status" class="status-ready">Spreman</strong>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Points Panel -->
+            <div class="panel points-panel">
+                <div class="panel-header">
+                    <h2><i class="fas fa-table"></i> Lista tačaka</h2>
+                    <button class="btn btn-danger btn-sm" onclick="clearAll()" title="Obriši sve tačke">
+                        <i class="fas fa-trash"></i> Obriši sve
+                    </button>
+                </div>
+                
+                <div class="points-container">
+                    <table id="pointsTable">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>X</th>
+                                <th>Y</th>
+                                <th>Akcija</th>
+                            </tr>
+                        </thead>
+                        <tbody id="pointsBody">
+                            <!-- Tačke će se dodati ovdje -->
+                        </tbody>
+                    </table>
+                    
+                    <div class="empty-state" id="emptyState">
+                        <i class="fas fa-inbox"></i>
+                        <p>Nema tačaka. Dodajte tačke da započnete.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // State
+        let points = [];
+        let currentMethod = 'lagrange';
+
+        // DOM Elements
+        const elements = {
+            xInput: document.getElementById('xInput'),
+            yInput: document.getElementById('yInput'),
+            pointsBody: document.getElementById('pointsBody'),
+            pointCount: document.getElementById('pointCount'),
+            currentMethod: document.getElementById('currentMethod'),
+            status: document.getElementById('status'),
+            plot: document.getElementById('plot'),
+            emptyState: document.getElementById('emptyState')
+        };
+
+        // Initialize
+        init();
+
+        function init() {
+            // Setup radio buttons
+            document.querySelectorAll('input[name="method"]').forEach(radio => {
+                radio.addEventListener('change', function() {
+                    currentMethod = this.value;
+                    elements.currentMethod.textContent = getMethodName(currentMethod);
+                });
+            });
+            
+            // Set default method
+            elements.currentMethod.textContent = getMethodName(currentMethod);
+            
+            // Enter key for adding points
+            elements.yInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') addPoint();
+            });
+            
+            updateUI();
+        }
+
+        // Point Management
+        function addPoint() {
+            const x = parseFloat(elements.xInput.value);
+            const y = parseFloat(elements.yInput.value);
+            
+            if (isNaN(x) || isNaN(y)) {
+                alert('Unesite validne brojeve!');
+                return;
+            }
+            
+            points.push({ x, y });
+            points.sort((a, b) => a.x - b.x);
+            
+            elements.xInput.value = '';
+            elements.yInput.value = '';
+            elements.xInput.focus();
+            
+            updateUI();
+        }
+
+        function deletePoint(index) {
+            points.splice(index, 1);
+            updateUI();
+        }
+
+        function clearAll() {
+            if (points.length > 0 && confirm('Obrisati sve tačke?')) {
+                points = [];
+                updateUI();
+                elements.plot.innerHTML = '';
+                elements.status.textContent = 'Spreman';
+                elements.status.className = 'status-ready';
+            }
+        }
+
+        function updateUI() {
+            // Update table
+            const tbody = elements.pointsBody;
+            tbody.innerHTML = '';
+            
+            points.forEach((point, index) => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${index + 1}</td>
+                    <td>${point.x.toFixed(4)}</td>
+                    <td>${point.y.toFixed(4)}</td>
+                    <td>
+                        <button class="btn-delete" onclick="deletePoint(${index})" title="Obriši tačku">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+            
+            // Update stats
+            elements.pointCount.textContent = points.length;
+            
+            // Show/hide empty state
+            elements.emptyState.style.display = points.length === 0 ? 'block' : 'none';
+        }
+
+        // Examples
+        function loadExample(type) {
+            points = [];
+            
+            if (type === 'quadratic') {
+                // f(x) = x²
+                for (let x = -3; x <= 3; x += 0.5) {
+                    points.push({ x, y: x * x });
+                }
+            } else if (type === 'sin') {
+                // f(x) = sin(x)
+                for (let x = 0; x <= 2 * Math.PI; x += 0.5) {
+                    points.push({ x, y: Math.sin(x) });
+                }
+            }
+            
+            points.sort((a, b) => a.x - b.x);
+            updateUI();
+        }
+
+        // Calculation
+        async function calculate() {
+            if (points.length < 2) {
+                alert('Potrebne su najmanje 2 tačke!');
+                return;
+            }
+            
+            elements.status.textContent = 'Računam...';
+            elements.status.className = 'status-calculating';
+            
+            try {
+                const response = await fetch('/interpolate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        points: points,
+                        method: currentMethod
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.error) {
+                    throw new Error(data.error);
+                }
+                
+                plotData(data);
+                elements.status.textContent = 'Spreman';
+                elements.status.className = 'status-ready';
+                
+            } catch (error) {
+                elements.status.textContent = 'Greška';
+                elements.status.className = 'status-error';
+                alert('Greška: ' + error.message);
+            }
+        }
+
+        function plotData(data) {
+            const trace1 = {
+                x: data.x_plot,
+                y: data.y_plot,
+                type: 'scatter',
+                mode: 'lines',
+                name: 'Interpolacija',
+                line: { color: '#4f46e5', width: 3 }
+            };
+            
+            const trace2 = {
+                x: data.x_points,
+                y: data.y_points,
+                type: 'scatter',
+                mode: 'markers',
+                name: 'Tačke',
+                marker: { color: '#dc2626', size: 10 }
+            };
+            
+            const layout = {
+                title: data.title,
+                xaxis: { title: 'X' },
+                yaxis: { title: 'Y' },
+                showlegend: true,
+                plot_bgcolor: '#f8fafc',
+                paper_bgcolor: 'white'
+            };
+            
+            Plotly.newPlot(elements.plot, [trace1, trace2], layout);
+        }
+
+        function getMethodName(method) {
+            const names = {
+                lagrange: 'Lagrange',
+                newton: 'Newton',
+                linear: 'Linearna',
+                spline: 'Spline',
+            };
+            return names[method] || method;
+        }
+    </script>
+</body>
+</html>
