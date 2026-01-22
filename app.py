@@ -4,6 +4,11 @@ NumericalMethods - Main Flask Application (No NumPy needed)
 
 from flask import Flask, render_template, request, jsonify
 import math
+from methods.lagrange import (
+    lagrange_interpolation,
+    barycentric_interpolation,
+    barycentric_weights,
+)
 
 app = Flask(__name__, static_folder='static')
 
@@ -31,10 +36,6 @@ def linear_interpolation(x_points, y_points, x):
     return y_points[0]  # fallback
 
 # Placeholder metode
-def lagrange_interpolation(x_points, y_points, x):
-    """TODO: Implementirati Lagrange"""
-    return 0.0
-
 def newton_interpolation(x_points, y_points, x):
     """TODO: Implementirati Newton"""
     return 0.0
@@ -79,7 +80,8 @@ def interpolate():
         # Odabir metode
         method_names = {
             'lagrange': 'Lagrangeova Interpolacija',
-            'newton': 'Newtonova Interpolacija', 
+            'barycentric': 'Barycentric Lagrange',
+            'newton': 'Newtonova Interpolacija',
             'linear': 'Linearna Interpolacija',
             'spline': 'Kubni Spline'
         }
@@ -94,6 +96,17 @@ def interpolate():
             try:
                 for x in x_plot:
                     y_plot.append(lagrange_interpolation(x_points, y_points, x))
+            except:
+                # Fallback na linearnu
+                for x in x_plot:
+                    y_plot.append(linear_interpolation(x_points, y_points, x))
+                method = 'linear'
+
+        elif method == 'barycentric':
+            try:
+                weights = barycentric_weights(x_points)
+                for x in x_plot:
+                    y_plot.append(barycentric_interpolation(x_points, y_points, x, weights))
             except:
                 # Fallback na linearnu
                 for x in x_plot:
