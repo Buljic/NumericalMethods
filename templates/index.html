@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="bs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NumericalMethods | Interpolacija</title>
+    <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* Additional styles for new features */
+        .info-box {
+            background: #f0f9ff;
+            border: 1px solid #bfdbfe;
+            border-radius: 6px;
+            padding: 12px;
+            margin-top: 16px;
+        }
+        
+        .info-box h4 {
+            font-size: 14px;
+            font-weight: 600;
+            color: #1e40af;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        .polynomial-formula {
+            font-family: 'Courier New', monospace;
+            background: white;
+            padding: 10px;
+            border-radius: 4px;
+            border: 1px solid #dbeafe;
+            font-size: 13px;
+            color: #1e293b;
+            overflow-x: auto;
+            white-space: pre;
+        }
+        
+        .comparison-table {
+            width: 100%;
+            margin-top: 12px;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+        
+        .comparison-table th {
+            background: #f1f5f9;
+            padding: 8px;
+            text-align: left;
+            font-weight: 600;
+            border-bottom: 2px solid #e2e8f0;
+        }
+        
+        .comparison-table td {
+            padding: 8px;
+            border-bottom: 1px solid #f1f5f9;
+        }
+        
+        .comparison-table tr:hover {
+            background: #f8fafc;
+        }
+        
+        .export-btns {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+        }
+        
+        .btn-export {
+            flex: 1;
+            padding: 8px;
+            background: #f1f5f9;
+            border: 1px solid #e2e8f0;
+            border-radius: 4px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .btn-export:hover {
+            background: #e2e8f0;
+            border-color: #2563eb;
+        }
+        
+        .highlight-best {
+            background: #dcfce7 !important;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="logo">
+                <i class="fas fa-calculator"></i>
+                <h1>NumericalMethods</h1>
+            </div>
+            <p class="subtitle">Numerička interpolacija</p>
+        </header>
+
+        <div class="main-grid">
+            <!-- Left Panel -->
+            <div class="panel control-panel">
+                <h2><i class="fas fa-sliders-h"></i> Kontrole</h2>
+                
+                <!-- Input -->
+                <div class="input-group">
+                    <div class="input-vertical">
+                        <div class="input-field">
+                            <label for="xInput">X koordinata:</label>
+                            <input type="number" id="xInput" placeholder="Unesite X vrijednost" step="any">
+                        </div>
+                        <div class="input-field">
+                            <label for="yInput">Y koordinata:</label>
+                            <input type="number" id="yInput" placeholder="Unesite Y vrijednost" step="any">
+                        </div>
+                        <button class="btn btn-primary" onclick="addPoint()">
+                            <i class="fas fa-plus"></i> Dodaj tačku
+                        </button>
+                    </div>
+                    <small>Pritisni Enter za brzo dodavanje</small>
+                </div>
+
+                <!-- Method -->
+                <div class="method-select">
+                    <h3>Metoda interpolacije:</h3>
+                    <div class="radio-grid">
+                        <div class="radio-row">
+                            <label class="radio-btn">
+                                <input type="radio" name="method" value="lagrange" checked>
+                                <span>Lagrange</span>
+                            </label>
+                            <label class="radio-btn">
+                                <input type="radio" name="method" value="newton">
+                                <span>Newton</span>
+                            </label>
+                        </div>
+                        <div class="radio-row">
+                            <label class="radio-btn">
+                                <input type="radio" name="method" value="linear">
+                                <span>Linearna</span>
+                            </label>
+                            <label class="radio-btn">
+                                <input type="radio" name="method" value="spline">
+                                <span>Spline</span>
+                            </label>
+                        </div>
+                        <div class="radio-row">
+                            <label class="radio-btn">
+                                <input type="radio" name="method" value="barycentric">
+                                <span>Barycentric</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Actions -->
+                <div class="actions">
+                    <button class="btn btn-calculate" onclick="calculate()">
+                        <i class="fas fa-rocket"></i> Izračunaj interpolaciju
+                    </button>
+                    
+                    <button class="btn btn-primary" onclick="compareAll()" style="width: 100%; margin-top: 8px;">
+                        <i class="fas fa-balance-scale"></i> Uporedi sve metode
+                    </button>
+                    
+                    <div class="example-btns">
+                        <h4>Primjeri:</h4>
+                        <div class="example-row">
+                            <button class="btn btn-example" onclick="loadExample('quadratic')">
+                                <i class="fas fa-chart-line"></i> Kvadratna
+                            </button>
+                            <button class="btn btn-example" onclick="loadExample('sin')">
+                                <i class="fas fa-wave-square"></i> Sinus
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Info Box for Polynomial -->
+                <div class="info-box" id="polynomialInfo" style="display: none;">
+                    <h4><i class="fas fa-function"></i> Informacije o metodi</h4>
+                    <div id="polynomialDisplay"></div>
+                </div>
+            </div>
+
+            <!-- Graph Panel -->
+            <div class="panel graph-panel">
+                <div class="panel-header">
+                    <h2><i class="fas fa-chart-line"></i> Grafik interpolacije</h2>
+                    <div class="stats">
+                        <span id="pointCount">0</span> tačaka
+                    </div>
+                </div>
+                <div id="plot"></div>
+                <div class="graph-info">
+                    <div class="info-item">
+                        <span>Metoda:</span>
+                        <strong id="currentMethod">-</strong>
+                    </div>
+                    <div class="info-item">
+                        <span>Status:</span>
+                        <strong id="status" class="status-ready">Spreman</strong>
+                    </div>
+                </div>
+                
+                <!-- Export Buttons -->
+                <div class="export-btns" id="exportButtons" style="display: none;">
+                    <button class="btn-export" onclick="exportCSV()">
+                        <i class="fas fa-file-csv"></i> Izvezi CSV
+                    </button>
+                    <button class="btn-export" onclick="exportPython()">
+                        <i class="fab fa-python"></i> Python kod
+                    </button>
+                    <button class="btn-export" onclick="exportImage()">
+                        <i class="fas fa-image"></i> Sačuvaj graf
+                    </button>
+                </div>
+            </div>
+
+            <!-- Points Panel -->
+            <div class="panel points-panel">
+                <div class="panel-header">
+                    <h2><i class="fas fa-table"></i> Lista tačaka</h2>
+                    <button class="btn btn-danger btn-sm" onclick="clearAll()" title="Obriši sve tačke">
+                        <i class="fas fa-trash"></i> Obriši sve
+                    </button>
+                </div>
+                
+                <div class="points-container">
+                    <table id="pointsTable">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>X</th>
+                                <th>Y</th>
+                                <th>Akcija</th>
+                            </tr>
+                        </thead>
+                        <tbody id="pointsBody"></tbody>
+                    </table>
+                    
+                    <div class="empty-state" id="emptyState">
+                        <i class="fas fa-inbox"></i>
+                        <p>Nema tačaka. Dodajte tačke da započnete.</p>
+                    </div>
+                </div>
+                
+                <!-- Comparison Results -->
+                <div class="info-box" id="comparisonBox" style="display: none; margin-top: 16px;">
+                    <h4><i class="fas fa-balance-scale"></i> Poređenje metoda</h4>
+                    <table class="comparison-table" id="comparisonTable"></table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let points = [];
+        let currentMethod = 'lagrange';
+        let hasCalculated = false;
+        let lastResponseData = null;
+
+        const elements = {
+            xInput: document.getElementById('xInput'),
+            yInput: document.getElementById('yInput'),
+            pointsBody: document.getElementById('pointsBody'),
+            pointCount: document.getElementById('pointCount'),
+            currentMethod: document.getElementById('currentMethod'),
+            status: document.getElementById('status'),
+            plot: document.getElementById('plot'),
+            emptyState: document.getElementById('emptyState'),
+            polynomialInfo: document.getElementById('polynomialInfo'),
+            polynomialDisplay: document.getElementById('polynomialDisplay'),
+            exportButtons: document.getElementById('exportButtons'),
+            comparisonBox: document.getElementById('comparisonBox')
+        };
+
+        init();
+
+        function init() {
+            document.querySelectorAll('input[name="method"]').forEach(radio => {
+                radio.addEventListener('change', function() {
+                    currentMethod = this.value;
+                    elements.currentMethod.textContent = getMethodName(currentMethod);
+                    console.log('🔄 Metoda:', currentMethod);
+                    
+                    if (points.length >= 2 && hasCalculated) {
+                        calculate();
+                    }
+                });
+            });
+            
+            elements.currentMethod.textContent = getMethodName(currentMethod);
+            elements.yInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') addPoint();
+            });
+            
+            updateUI();
+        }
+
+        function addPoint() {
+            const x = parseFloat(elements.xInput.value);
+            const y = parseFloat(elements.yInput.value);
+            
+            if (isNaN(x) || isNaN(y)) {
+                alert('Unesite validne brojeve!');
+                return;
+            }
+            
+            points.push({ x, y });
+            points.sort((a, b) => a.x - b.x);
+            
+            elements.xInput.value = '';
+            elements.yInput.value = '';
+            elements.xInput.focus();
+            
+            updateUI();
+        }
+
+        function deletePoint(index) {
+            points.splice(index, 1);
+            updateUI();
+            
+            if (points.length < 2) {
+                hasCalculated = false;
+                elements.plot.innerHTML = '';
+                elements.polynomialInfo.style.display = 'none';
+                elements.exportButtons.style.display = 'none';
+            }
+        }
+
+        function clearAll() {
+            if (points.length > 0 && confirm('Obrisati sve tačke?')) {
+                points = [];
+                hasCalculated = false;
+                updateUI();
+                elements.plot.innerHTML = '';
+                elements.status.textContent = 'Spreman';
+                elements.status.className = 'status-ready';
+                elements.polynomialInfo.style.display = 'none';
+                elements.exportButtons.style.display = 'none';
+                elements.comparisonBox.style.display = 'none';
+            }
+        }
+
+        function updateUI() {
+            const tbody = elements.pointsBody;
+            tbody.innerHTML = '';
+            
+            points.forEach((point, index) => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${index + 1}</td>
+                    <td>${point.x.toFixed(4)}</td>
+                    <td>${point.y.toFixed(4)}</td>
+                    <td>
+                        <button class="btn-delete" onclick="deletePoint(${index})">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+            
+            elements.pointCount.textContent = points.length;
+            elements.emptyState.style.display = points.length === 0 ? 'block' : 'none';
+        }
+
+        function loadExample(type) {
+            points = [];
+            hasCalculated = false;
+            
+            if (type === 'quadratic') {
+                for (let x = -3; x <= 3; x += 0.5) {
+                    points.push({ x, y: x * x });
+                }
+            } else if (type === 'sin') {
+                for (let x = 0; x <= 2 * Math.PI; x += 0.5) {
+                    points.push({ x, y: Math.sin(x) });
+                }
+            }
+            
+            points.sort((a, b) => a.x - b.x);
+            updateUI();
+        }
+
+        async function calculate() {
+            if (points.length < 2) {
+                alert('Potrebne su najmanje 2 tačke!');
+                return;
+            }
+            
+            console.log('📊 Računam:', currentMethod);
+            elements.status.textContent = 'Računam...';
+            elements.status.className = 'status-calculating';
+            
+            try {
+                const response = await fetch('/interpolate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        points: points,
+                        method: currentMethod
+                    })
+                });
+                
+                const data = await response.json();
+                console.log('✅ Primljeno:', data.title);
+                
+                if (data.error) throw new Error(data.error);
+                
+                lastResponseData = data;
+                plotData(data);
+                displayPolynomialInfo(data);
+                hasCalculated = true;
+                elements.status.textContent = 'Spreman';
+                elements.status.className = 'status-ready';
+                elements.exportButtons.style.display = 'flex';
+                
+            } catch (error) {
+                console.error('❌', error);
+                elements.status.textContent = 'Greška';
+                elements.status.className = 'status-error';
+                alert('Greška: ' + error.message);
+            }
+        }
+
+        function plotData(data) {
+            const trace1 = {
+                x: data.x_plot,
+                y: data.y_plot,
+                type: 'scatter',
+                mode: 'lines',
+                name: 'Interpolacija',
+                line: { color: '#2563eb', width: 3 }
+            };
+            
+            const trace2 = {
+                x: data.x_points,
+                y: data.y_points,
+                type: 'scatter',
+                mode: 'markers',
+                name: 'Tačke',
+                marker: { color: '#dc2626', size: 10 }
+            };
+            
+            const layout = {
+                title: data.title,
+                xaxis: { title: 'X' },
+                yaxis: { title: 'Y' },
+                showlegend: true,
+                plot_bgcolor: '#f9fafb',
+                paper_bgcolor: 'white'
+            };
+            
+            Plotly.newPlot(elements.plot, [trace1, trace2], layout);
+            console.log('📈 Graf ažuriran');
+        }
+
+        function displayPolynomialInfo(data) {
+            let info = '';
+            
+            if (currentMethod === 'lagrange' || currentMethod === 'barycentric') {
+                info = `<div class="polynomial-formula">Lagrangeov polinom stepena ${points.length - 1}
+Prolazi kroz sve ${points.length} tačke
+Formula: P(x) = Σ Li(x) · yi</div>`;
+            } else if (currentMethod === 'newton') {
+                info = `<div class="polynomial-formula">Newtonov polinom sa podijeljenim razlikama
+Stepen: ${points.length - 1}
+P(x) = a₀ + a₁(x-x₀) + a₂(x-x₀)(x-x₁) + ...</div>`;
+            } else if (currentMethod === 'linear') {
+                info = `<div class="polynomial-formula">Piecewise linearna interpolacija
+${points.length - 1} linearnih segmenata
+Kontinuirana, ali ne i glatka</div>`;
+            } else if (currentMethod === 'spline') {
+                info = `<div class="polynomial-formula">Natural Cubic Spline
+${points.length - 1} kubnih polinoma (stepen 3)
+Kontinuirana i glatka (C² kontinuitet)</div>`;
+            }
+            
+            elements.polynomialDisplay.innerHTML = info;
+            elements.polynomialInfo.style.display = 'block';
+        }
+
+        async function compareAll() {
+            if (points.length < 2) {
+                alert('Potrebne su najmanje 2 tačke!');
+                return;
+            }
+            
+            elements.status.textContent = 'Poredim metode...';
+            elements.status.className = 'status-calculating';
+            
+            const methods = ['lagrange', 'newton', 'linear', 'spline', 'barycentric'];
+            const results = [];
+            
+            // Test tačka u sredini
+            const xTest = (points[0].x + points[points.length - 1].x) / 2;
+            
+            for (const method of methods) {
+                try {
+                    const response = await fetch('/interpolate', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            points: points,
+                            method: method
+                        })
+                    });
+                    
+                    const data = await response.json();
+                    
+                    // Nađi y vrijednost za xTest
+                    const idx = data.x_plot.findIndex(x => x >= xTest);
+                    const yValue = data.y_plot[idx];
+                    
+                    results.push({
+                        method: method,
+                        name: getMethodName(method),
+                        value: yValue,
+                        points: points.length
+                    });
+                } catch (e) {
+                    console.error(`Greška za ${method}:`, e);
+                }
+            }
+            
+            displayComparison(results, xTest);
+            elements.status.textContent = 'Spreman';
+            elements.status.className = 'status-ready';
+        }
+
+        function displayComparison(results, xTest) {
+            let html = `
+                <thead>
+                    <tr>
+                        <th>Metoda</th>
+                        <th>f(${xTest.toFixed(2)})</th>
+                        <th>Tip</th>
+                    </tr>
+                </thead>
+                <tbody>
+            `;
+            
+            results.forEach(r => {
+                let type = '';
+                if (r.method === 'linear') type = 'Piecewise';
+                else if (r.method === 'spline') type = 'Kubni';
+                else type = 'Polinom';
+                
+                html += `
+                    <tr>
+                        <td><strong>${r.name}</strong></td>
+                        <td>${r.value.toFixed(6)}</td>
+                        <td>${type}</td>
+                    </tr>
+                `;
+            });
+            
+            html += '</tbody>';
+            
+            document.getElementById('comparisonTable').innerHTML = html;
+            elements.comparisonBox.style.display = 'block';
+        }
+
+        function exportCSV() {
+            let csv = 'X,Y\n';
+            points.forEach(p => {
+                csv += `${p.x},${p.y}\n`;
+            });
+            
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'tacke_interpolacija.csv';
+            a.click();
+        }
+
+        function exportPython() {
+            const xVals = points.map(p => p.x).join(', ');
+            const yVals = points.map(p => p.y).join(', ');
+            
+            const code = `# Interpolacija - NumericalMethods
+import matplotlib.pyplot as plt
+from scipy.interpolate import lagrange
+
+# Tačke
+x = [${xVals}]
+y = [${yVals}]
+
+# ${getMethodName(currentMethod)} interpolacija
+poly = lagrange(x, y)
+
+# Plot
+import numpy as np
+x_plot = np.linspace(min(x), max(x), 200)
+y_plot = poly(x_plot)
+
+plt.plot(x_plot, y_plot, label='Interpolacija')
+plt.scatter(x, y, color='red', label='Tačke')
+plt.xlabel('X')
+plt.ylabel('Y')
+plt.legend()
+plt.title('${getMethodName(currentMethod)}')
+plt.grid(True)
+plt.show()
+`;
+            
+            const blob = new Blob([code], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'interpolacija.py';
+            a.click();
+        }
+
+        function exportImage() {
+            Plotly.downloadImage(elements.plot, {
+                format: 'png',
+                width: 1200,
+                height: 800,
+                filename: 'interpolacija_graf'
+            });
+        }
+
+        function getMethodName(method) {
+            const names = {
+                lagrange: 'Lagrange',
+                barycentric: 'Barycentric Lagrange',
+                newton: 'Newton',
+                linear: 'Linearna',
+                spline: 'Spline',
+            };
+            return names[method] || method;
+        }
+    </script>
+</body>
+</html>
