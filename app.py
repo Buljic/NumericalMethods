@@ -3,48 +3,40 @@ NumericalMethods - Main Flask Application (No NumPy needed)
 """
 
 from flask import Flask, render_template, request, jsonify
-import math
 from methods.lagrange import (
     lagrange_interpolation,
     barycentric_interpolation,
     barycentric_weights,
 )
+from methods.newton import  newton_divided_differences, newton_interpolation
+from methods.spline import cubic_spline_coeffs, cubic_spline_interpolation
+from methods.utils import sort_points
 
 app = Flask(__name__, static_folder='static')
 
 # Linearna interpolacija (gotova)
 def linear_interpolation(x_points, y_points, x):
-    """
-    Linearna interpolacija između tačaka
-    """
-    n = len(x_points)
-    
-    # Ako je x van opsega
-    if x <= x_points[0]:
-        return y_points[0]
-    
-    if x >= x_points[-1]:
-        return y_points[-1]
-    
-    # Pronađi interval
+    xs, ys = sort_points(x_points, y_points)
+    n = len(xs)
+    if x <= xs[0]:
+        return ys[0] + (x - xs[0]) * (ys[1] - ys[0]) / (xs[1] - xs[0])
+    if x >= xs[-1]:
+        return ys[-2] + (x - xs[-2]) * (ys[-1] - ys[-2]) / (xs[-1] - xs[-2])
+
     for i in range(n - 1):
-        if x_points[i] <= x <= x_points[i+1]:
-            # Linearna interpolacija
-            t = (x - x_points[i]) / (x_points[i+1] - x_points[i])
-            return y_points[i] + t * (y_points[i+1] - y_points[i])
-    
-    return y_points[0]  # fallback
+        if xs[i] <= x <= xs[i+1]:
+            t = (x - xs[i]) / (xs[i+1] - xs[i])
+            return ys[i] + t * (ys[i+1] - ys[i])
+    return ys[0]
 
 # Placeholder metode
-def newton_interpolation(x_points, y_points, x):
-    """TODO: Implementirati Newton"""
-    return 0.0
+def newton_interpolation_api(x_points, y_points, x):
+    coef = newton_divided_differences(x_points, y_points)
+    return newton_interpolation(x_points, y_points, x, coef=coef)
 
-def cubic_spline_interpolation(x_points, y_points, x_eval):
-    """TODO: Implementirati Spline"""
-    if isinstance(x_eval, list):
-        return [0.0] * len(x_eval)
-    return 0.0
+def cubic_spline_interpolation_api(x_points, y_points, x_eval):
+    coeffs = cubic_spline_coeffs(x_points, y_points)
+    return cubic_spline_interpolation(x_points, y_points, x_eval, coeffs=coeffs)
 
 # Helper funkcija za linspace bez NumPy
 def linspace(start, stop, num=200):
@@ -115,8 +107,9 @@ def interpolate():
         
         elif method == 'newton':
             try:
+                coef = newton_divided_differences(x_points, y_points)
                 for x in x_plot:
-                    y_plot.append(newton_interpolation(x_points, y_points, x))
+                   y_plot.append(newton_interpolation(x_points, y_points, x, coef=coef))
             except:
                 # Fallback na linearnu
                 for x in x_plot:
@@ -125,7 +118,8 @@ def interpolate():
         
         elif method == 'spline':
             try:
-                y_plot = cubic_spline_interpolation(x_points, y_points, x_plot)
+                coeffs = cubic_spline_coeffs(x_points, y_points)
+                y_plot = cubic_spline_interpolation(x_points, y_points, x_plot, coeffs=coeffs)
                 if not isinstance(y_plot, list):
                     y_plot = [float(y_plot)]
             except:
