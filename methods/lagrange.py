@@ -1,35 +1,43 @@
 """
 Lagrangeova interpolacija
+
+Napomena o razlikama:
+- Obicni Lagrange direktno racuna bazne polinome i ima vise mnozenja po evaluaciji.
+- Barycentric Lagrange racuna tezine jednom, pa zatim brze i stabilnije evaluira.
 """
+
 
 def lagrange_interpolation(x_points, y_points, x):
     """
-    Izračunava vrijednost Lagrangeovog interpolacionog polinoma u tački x
-    
+    Izracunava vrijednost Lagrangeovog interpolacionog polinoma u tacki x.
+
     Args:
-        x_points: Lista x koordinata tačaka
-        y_points: Lista y koordinata tačaka
-        x: Tačka u kojoj se evaluira
-    
+        x_points: Lista x koordinata tacaka
+        y_points: Lista y koordinata tacaka
+        x: Tacka u kojoj se evaluira
+
     Returns:
         Interpolirana vrijednost
     """
-    # Direct Lagrange formula, O(n^2) per evaluation.
+    # Direktna Lagrange formula, O(n^2) po evaluaciji.
     n = len(x_points)
     eps = 1e-12
 
     for i in range(n):
+        # Ako je x tacno na poznatoj tacki, vrati y bez dodatne matematike.
         if abs(x - x_points[i]) <= eps:
             return y_points[i]
 
     total = 0.0
     for i in range(n):
+        # Racunamo vrijednost i-tog baznog polinoma u x.
         term = y_points[i]
         xi = x_points[i]
         for j in range(n):
             if i == j:
                 continue
             denom = xi - x_points[j]
+            # Provjera duplih x vrijednosti.
             if abs(denom) <= eps:
                 raise ValueError("Duplicate x value in points.")
             term *= (x - x_points[j]) / denom
@@ -39,7 +47,9 @@ def lagrange_interpolation(x_points, y_points, x):
 
 
 def barycentric_weights(x_points):
-    # Precompute barycentric weights for stability and speed.
+    """
+    Racuna barycentric tezine za stabilniju evaluaciju.
+    """
     n = len(x_points)
     eps = 1e-12
     weights = [1.0] * n
@@ -60,7 +70,9 @@ def barycentric_weights(x_points):
 
 
 def barycentric_interpolation(x_points, y_points, x, weights=None):
-    # Evaluate using the first barycentric form.
+    """
+    Evaluacija Lagrange polinoma barycentric formom.
+    """
     if weights is None:
         weights = barycentric_weights(x_points)
 
