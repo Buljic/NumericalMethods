@@ -18,6 +18,7 @@ Ovaj projekat je Flask web aplikacija koja omogucava unos skupa tacaka i izracun
 - Linearna interpolacija
 - Kubni spline (natural cubic)
 - Poredjenje svih metoda na test tacki
+- Testni preset primjeri (kvadratna, sinus, Rungeov fenomen, eksponencijalna, |x|)
 - Izvoz tacaka u CSV
 - Generisanje Python koda za plot
 - Export grafa kao slike
@@ -35,7 +36,9 @@ Ovaj projekat je Flask web aplikacija koja omogucava unos skupa tacaka i izracun
 
 ```bash
 python -m venv .venv
-.venv\Scripts\activate
+.venv\Scripts\activate (Windows)
+
+source .venv/bin/activate (Linux)
 ```
 
 2. Instaliraj zavisnosti:

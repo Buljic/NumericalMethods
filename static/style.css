@@ -294,6 +294,17 @@ body {
     gap: 8px;
 }
 
+.example-row + .example-row {
+    margin-top: 8px;
+}
+
+.example-hint {
+    margin-top: 10px;
+    color: var(--text-secondary);
+    font-size: 12px;
+    line-height: 1.4;
+}
+
 /* Graph */
 #plot {
     width: 100%;

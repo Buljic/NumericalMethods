@@ -178,6 +178,20 @@
                                 <i class="fas fa-wave-square"></i> Sinus
                             </button>
                         </div>
+                        <div class="example-row">
+                            <button class="btn btn-example" onclick="loadExample('runge')">
+                                <i class="fas fa-mountain"></i> Rungeov fenomen
+                            </button>
+                            <button class="btn btn-example" onclick="loadExample('exp')">
+                                <i class="fas fa-arrow-trend-up"></i> Eksponencijalna
+                            </button>
+                        </div>
+                        <div class="example-row">
+                            <button class="btn btn-example" onclick="loadExample('abs')">
+                                <i class="fas fa-wave-square"></i> |x| (oštri vrh)
+                            </button>
+                        </div>
+                        <p id="exampleHint" class="example-hint">Klik na primjer ubacuje tačke i pokreće račun.</p>
                     </div>
                 </div>
                 
@@ -265,6 +279,69 @@
         let currentMethod = 'lagrange';
         let hasCalculated = false;
         let lastResponseData = null;
+        let activeExample = null;
+
+        const rungeFunction = (x) => 1 / (1 + 25 * x * x);
+
+        function generateUniformPoints(start, stop, count, fn) {
+            const generated = [];
+            if (count < 2) return generated;
+
+            const step = (stop - start) / (count - 1);
+            for (let i = 0; i < count; i++) {
+                const x = start + i * step;
+                generated.push({
+                    x: Number(x.toFixed(6)),
+                    y: Number(fn(x).toFixed(12))
+                });
+            }
+
+            return generated;
+        }
+
+        const EXAMPLE_DEFINITIONS = {
+            quadratic: {
+                name: 'Kvadratna funkcija',
+                description: 'f(x) = x². Dobar uvod za demonstraciju jer je glatka i stabilna.',
+                method: 'lagrange',
+                points: generateUniformPoints(-3, 3, 13, (x) => x * x),
+                referenceFn: (x) => x * x,
+                referenceLabel: 'Referenca f(x) = x²'
+            },
+            sin: {
+                name: 'Sinus',
+                description: 'f(x) = sin(x) na [0, 2π]. Korisno za poređenje tačnosti različitih metoda.',
+                method: 'spline',
+                points: generateUniformPoints(0, 2 * Math.PI, 11, (x) => Math.sin(x)),
+                referenceFn: (x) => Math.sin(x),
+                referenceLabel: 'Referenca sin(x)'
+            },
+            runge: {
+                name: 'Rungeov fenomen',
+                description: 'Ekvidistantne tačke za f(x) = 1/(1+25x²) na [-1, 1]. Lagrange/Newton često osciliraju pri krajevima.',
+                method: 'lagrange',
+                points: generateUniformPoints(-1, 1, 11, rungeFunction),
+                referenceFn: rungeFunction,
+                referenceLabel: 'Originalna Rungeova funkcija',
+                lockXDomain: true
+            },
+            exp: {
+                name: 'Eksponencijalna',
+                description: 'f(x) = e^x na [-2, 2]. Dobar primjer brzog rasta funkcije.',
+                method: 'newton',
+                points: generateUniformPoints(-2, 2, 9, (x) => Math.exp(x)),
+                referenceFn: (x) => Math.exp(x),
+                referenceLabel: 'Referenca e^x'
+            },
+            abs: {
+                name: 'Apsolutna vrijednost',
+                description: 'f(x) = |x| sa oštrim vrhom u 0. Korisno za poređenje spline i linearne metode.',
+                method: 'linear',
+                points: generateUniformPoints(-3, 3, 13, (x) => Math.abs(x)),
+                referenceFn: (x) => Math.abs(x),
+                referenceLabel: 'Referenca |x|'
+            }
+        };
 
         const elements = {
             xInput: document.getElementById('xInput'),
@@ -278,7 +355,8 @@
             polynomialInfo: document.getElementById('polynomialInfo'),
             polynomialDisplay: document.getElementById('polynomialDisplay'),
             exportButtons: document.getElementById('exportButtons'),
-            comparisonBox: document.getElementById('comparisonBox')
+            comparisonBox: document.getElementById('comparisonBox'),
+            exampleHint: document.getElementById('exampleHint')
         };
 
         init();
@@ -301,6 +379,7 @@
                 if (e.key === 'Enter') addPoint();
             });
             
+            updateExampleHint();
             updateUI();
         }
 
@@ -313,6 +392,7 @@
                 return;
             }
             
+            clearActiveExample();
             points.push({ x, y });
             points.sort((a, b) => a.x - b.x);
             
@@ -324,6 +404,7 @@
         }
 
         function deletePoint(index) {
+            clearActiveExample();
             points.splice(index, 1);
             updateUI();
             
@@ -337,6 +418,7 @@
 
         function clearAll() {
             if (points.length > 0 && confirm('Obrisati sve tačke?')) {
+                clearActiveExample();
                 points = [];
                 hasCalculated = false;
                 updateUI();
@@ -372,22 +454,50 @@
             elements.emptyState.style.display = points.length === 0 ? 'block' : 'none';
         }
 
-        function loadExample(type) {
-            points = [];
-            hasCalculated = false;
-            
-            if (type === 'quadratic') {
-                for (let x = -3; x <= 3; x += 0.5) {
-                    points.push({ x, y: x * x });
-                }
-            } else if (type === 'sin') {
-                for (let x = 0; x <= 2 * Math.PI; x += 0.5) {
-                    points.push({ x, y: Math.sin(x) });
-                }
+        function setMethod(method) {
+            const radio = document.querySelector(`input[name="method"][value="${method}"]`);
+            if (!radio) return;
+            radio.checked = true;
+            currentMethod = method;
+            elements.currentMethod.textContent = getMethodName(currentMethod);
+        }
+
+        function updateExampleHint(example = null) {
+            if (!elements.exampleHint) return;
+
+            if (!example) {
+                elements.exampleHint.textContent = 'Klik na primjer ubacuje tačke i pokreće račun.';
+                return;
             }
-            
+
+            elements.exampleHint.textContent = `${example.name}: ${example.description}`;
+        }
+
+        function clearActiveExample() {
+            if (!activeExample) return;
+            activeExample = null;
+            updateExampleHint();
+        }
+
+        function loadExample(type) {
+            const example = EXAMPLE_DEFINITIONS[type];
+            if (!example) return;
+
+            activeExample = example;
+            hasCalculated = false;
+            lastResponseData = null;
+            points = example.points.map((point) => ({ ...point }));
             points.sort((a, b) => a.x - b.x);
+            setMethod(example.method);
+            updateExampleHint(example);
+
             updateUI();
+            elements.plot.innerHTML = '';
+            elements.polynomialInfo.style.display = 'none';
+            elements.exportButtons.style.display = 'none';
+            elements.comparisonBox.style.display = 'none';
+
+            calculate();
         }
 
         async function calculate() {
@@ -449,6 +559,23 @@
                 name: 'Tačke',
                 marker: { color: '#dc2626', size: 10 }
             };
+
+            const traces = [trace1, trace2];
+            if (activeExample && typeof activeExample.referenceFn === 'function') {
+                const traceReference = {
+                    x: data.x_plot,
+                    y: data.x_plot.map((x) => activeExample.referenceFn(x)),
+                    type: 'scatter',
+                    mode: 'lines',
+                    name: activeExample.referenceLabel || 'Referentna funkcija',
+                    line: {
+                        color: '#0f766e',
+                        width: 2,
+                        dash: 'dash'
+                    }
+                };
+                traces.unshift(traceReference);
+            }
             
             const layout = {
                 title: data.title,
@@ -458,8 +585,14 @@
                 plot_bgcolor: '#f9fafb',
                 paper_bgcolor: 'white'
             };
+
+            if (activeExample && activeExample.lockXDomain && data.x_points.length > 1) {
+                const xMin = Math.min(...data.x_points);
+                const xMax = Math.max(...data.x_points);
+                layout.xaxis = { ...layout.xaxis, range: [xMin, xMax] };
+            }
             
-            Plotly.newPlot(elements.plot, [trace1, trace2], layout);
+            Plotly.newPlot(elements.plot, traces, layout, { responsive: true });
             console.log('📈 Graf ažuriran');
         }
 
@@ -482,6 +615,11 @@ Kontinuirana, ali ne i glatka</div>`;
                 info = `<div class="polynomial-formula">Natural Cubic Spline
 ${points.length - 1} kubnih polinoma (stepen 3)
 Kontinuirana i glatka (C² kontinuitet)</div>`;
+            }
+
+            if (activeExample) {
+                info += `<div class="polynomial-formula" style="margin-top: 8px;">Primjer: ${activeExample.name}
+${activeExample.description}</div>`;
             }
             
             elements.polynomialDisplay.innerHTML = info;
