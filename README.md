@@ -18,7 +18,7 @@ Ovaj projekat je Flask web aplikacija koja omogucava unos skupa tacaka i izracun
 - Linearna interpolacija
 - Kubni spline (natural cubic)
 - Poredjenje svih metoda na test tacki
-- Testni preset primjeri (kvadratna, sinus, Rungeov fenomen, eksponencijalna, |x|)
+- Testni preset primjeri (kvadratna, sinus, Rungeov fenomen, eksponencijalna, |x|, linearna, Gaussova, logaritamska)
 - Izvoz tacaka u CSV
 - Generisanje Python koda za plot
 - Export grafa kao slike
