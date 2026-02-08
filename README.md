@@ -2,7 +2,7 @@
 
 Web aplikacija za numericku interpolaciju tackama, sa vizualizacijom i poredjenjem metoda u realnom vremenu.
 
-<img width="1901" height="917" alt="image" src="https://github.com/user-attachments/assets/3a7feff2-612a-41eb-b8dd-14988fb487e7" />
+<img width="341" height="319" alt="image" src="https://github.com/user-attachments/assets/8b376cf3-cb98-4998-acd0-a6a3792b4472" />
 
 
 ## Pregled
