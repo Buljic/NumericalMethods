@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="bs">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -16,7 +17,7 @@
             padding: 12px;
             margin-top: 16px;
         }
-        
+
         .info-box h4 {
             font-size: 14px;
             font-weight: 600;
@@ -26,7 +27,7 @@
             align-items: center;
             gap: 6px;
         }
-        
+
         .polynomial-formula {
             font-family: 'Courier New', monospace;
             background: white;
@@ -38,14 +39,14 @@
             overflow-x: auto;
             white-space: pre;
         }
-        
+
         .comparison-table {
             width: 100%;
             margin-top: 12px;
             border-collapse: collapse;
             font-size: 13px;
         }
-        
+
         .comparison-table th {
             background: #f1f5f9;
             padding: 8px;
@@ -53,22 +54,22 @@
             font-weight: 600;
             border-bottom: 2px solid #e2e8f0;
         }
-        
+
         .comparison-table td {
             padding: 8px;
             border-bottom: 1px solid #f1f5f9;
         }
-        
+
         .comparison-table tr:hover {
             background: #f8fafc;
         }
-        
+
         .export-btns {
             display: flex;
             gap: 8px;
             margin-top: 12px;
         }
-        
+
         .btn-export {
             flex: 1;
             padding: 8px;
@@ -79,18 +80,19 @@
             cursor: pointer;
             transition: all 0.2s;
         }
-        
+
         .btn-export:hover {
             background: #e2e8f0;
             border-color: #2563eb;
         }
-        
+
         .highlight-best {
             background: #dcfce7 !important;
             font-weight: 600;
         }
     </style>
 </head>
+
 <body>
     <div class="container">
         <!-- Header -->
@@ -106,7 +108,7 @@
             <!-- Left Panel -->
             <div class="panel control-panel">
                 <h2><i class="fas fa-sliders-h"></i> Kontrole</h2>
-                
+
                 <!-- Input -->
                 <div class="input-group">
                     <div class="input-vertical">
@@ -163,38 +165,49 @@
                     <button class="btn btn-calculate" onclick="calculate()">
                         <i class="fas fa-rocket"></i> Izračunaj interpolaciju
                     </button>
-                    
+
                     <button class="btn btn-primary" onclick="compareAll()" style="width: 100%; margin-top: 8px;">
                         <i class="fas fa-balance-scale"></i> Uporedi sve metode
                     </button>
-                    
+
                     <div class="example-btns">
                         <h4>Primjeri:</h4>
                         <div class="example-row">
                             <button class="btn btn-example" onclick="loadExample('quadratic')">
                                 <i class="fas fa-chart-line"></i> Kvadratna
                             </button>
-                            <button class="btn btn-example" onclick="loadExample('sin')">
-                                <i class="fas fa-wave-square"></i> Sinus
-                            </button>
-                        </div>
-                        <div class="example-row">
                             <button class="btn btn-example" onclick="loadExample('runge')">
                                 <i class="fas fa-mountain"></i> Rungeov fenomen
-                            </button>
-                            <button class="btn btn-example" onclick="loadExample('exp')">
-                                <i class="fas fa-arrow-trend-up"></i> Eksponencijalna
                             </button>
                         </div>
                         <div class="example-row">
                             <button class="btn btn-example" onclick="loadExample('abs')">
                                 <i class="fas fa-wave-square"></i> |x| (oštri vrh)
                             </button>
+                            <button class="btn btn-example" onclick="loadExample('linearExample')">
+                                <i class="fas fa-slash"></i> Linearna
+                            </button>
+                        </div>
+                        <div class="example-row">
+                            <button class="btn btn-example" onclick="loadExample('sin')">
+                                <i class="fas fa-wave-square"></i> Sinus
+                            </button>
+                            <button class="btn btn-example" onclick="loadExample('gauss')">
+                                <i class="fas fa-bell"></i> Gaussova
+                            </button>
+                        </div>
+                        <div class="example-row">
+                            <button class="btn btn-example" onclick="loadExample('exp')">
+                                <i class="fas fa-arrow-trend-up"></i> Eksponencijalna
+                            </button>
+                            <button class="btn btn-example" onclick="loadExample('log')">
+                                <i class="fas fa-chart-area"></i> Logaritamska
+                            </button>
                         </div>
                         <p id="exampleHint" class="example-hint">Klik na primjer ubacuje tačke i pokreće račun.</p>
                     </div>
                 </div>
-                
+
                 <!-- Info Box for Polynomial -->
                 <div class="info-box" id="polynomialInfo" style="display: none;">
                     <h4><i class="fas fa-function"></i> Informacije o metodi</h4>
@@ -221,7 +234,7 @@
                         <strong id="status" class="status-ready">Spreman</strong>
                     </div>
                 </div>
-                
+
                 <!-- Export Buttons -->
                 <div class="export-btns" id="exportButtons" style="display: none;">
                     <button class="btn-export" onclick="exportCSV()">
@@ -235,10 +248,10 @@
                     </button>
                 </div>
                 <!-- Comparison Results (PREMJESTENO ISPOD STATUS + EXPORT) -->
-<div class="info-box" id="comparisonBox" style="display: none; margin-top: 16px;">
-    <h4><i class="fas fa-balance-scale"></i> Poređenje metoda</h4>
-    <table class="comparison-table" id="comparisonTable"></table>
-</div>
+                <div class="info-box" id="comparisonBox" style="display: none; margin-top: 16px;">
+                    <h4><i class="fas fa-balance-scale"></i> Poređenje metoda</h4>
+                    <table class="comparison-table" id="comparisonTable"></table>
+                </div>
             </div>
 
             <!-- Points Panel -->
@@ -249,7 +262,7 @@
                         <i class="fas fa-trash"></i> Obriši sve
                     </button>
                 </div>
-                
+
                 <div class="points-container">
                     <table id="pointsTable">
                         <thead>
@@ -262,14 +275,12 @@
                         </thead>
                         <tbody id="pointsBody"></tbody>
                     </table>
-                    
+
                     <div class="empty-state" id="emptyState">
                         <i class="fas fa-inbox"></i>
                         <p>Nema tačaka. Dodajte tačke da započnete.</p>
                     </div>
                 </div>
-                
-                
             </div>
         </div>
     </div>
@@ -340,6 +351,30 @@
                 points: generateUniformPoints(-3, 3, 13, (x) => Math.abs(x)),
                 referenceFn: (x) => Math.abs(x),
                 referenceLabel: 'Referenca |x|'
+            },
+            linearExample: {
+                name: 'Linearna funkcija',
+                description: 'f(x) = 2x + 1. Savršeno za demonstraciju linearne interpolacije jer polinom stepena 1 prolazi kroz sve tačke.',
+                method: 'linear',
+                points: generateUniformPoints(-3, 3, 7, (x) => 2 * x + 1),
+                referenceFn: (x) => 2 * x + 1,
+                referenceLabel: 'Referenca f(x) = 2x + 1'
+            },
+            log: {
+                name: 'Logaritamska funkcija',
+                description: 'f(x) = ln(x). Nedefinisana za x ≤ 0.',
+                method: 'newton',
+                points: generateUniformPoints(0.5, 5, 9, (x) => Math.log(x)),
+                referenceFn: (x) => Math.log(x),
+                referenceLabel: 'Referenca ln(x)'
+            },
+            gauss: {
+                name: 'Gaussova funkcija',
+                description: 'f(x) = e^(−x²). Glatka i simetrična.',
+                method: 'spline',
+                points: generateUniformPoints(-3, 3, 11, (x) => Math.exp(-x * x)),
+                referenceFn: (x) => Math.exp(-x * x),
+                referenceLabel: 'Referenca e^(−x²)'
             }
         };
 
@@ -363,22 +398,22 @@
 
         function init() {
             document.querySelectorAll('input[name="method"]').forEach(radio => {
-                radio.addEventListener('change', function() {
+                radio.addEventListener('change', function () {
                     currentMethod = this.value;
                     elements.currentMethod.textContent = getMethodName(currentMethod);
                     console.log('🔄 Metoda:', currentMethod);
-                    
+
                     if (points.length >= 2 && hasCalculated) {
                         calculate();
                     }
                 });
             });
-            
+
             elements.currentMethod.textContent = getMethodName(currentMethod);
-            elements.yInput.addEventListener('keypress', function(e) {
+            elements.yInput.addEventListener('keypress', function (e) {
                 if (e.key === 'Enter') addPoint();
             });
-            
+
             updateExampleHint();
             updateUI();
         }
@@ -386,20 +421,20 @@
         function addPoint() {
             const x = parseFloat(elements.xInput.value);
             const y = parseFloat(elements.yInput.value);
-            
+
             if (isNaN(x) || isNaN(y)) {
                 alert('Unesite validne brojeve!');
                 return;
             }
-            
+
             clearActiveExample();
             points.push({ x, y });
             points.sort((a, b) => a.x - b.x);
-            
+
             elements.xInput.value = '';
             elements.yInput.value = '';
             elements.xInput.focus();
-            
+
             updateUI();
         }
 
@@ -407,7 +442,7 @@
             clearActiveExample();
             points.splice(index, 1);
             updateUI();
-            
+
             if (points.length < 2) {
                 hasCalculated = false;
                 elements.plot.innerHTML = '';
@@ -434,7 +469,7 @@
         function updateUI() {
             const tbody = elements.pointsBody;
             tbody.innerHTML = '';
-            
+
             points.forEach((point, index) => {
                 const row = document.createElement('tr');
                 row.innerHTML = `
@@ -449,7 +484,7 @@
                 `;
                 tbody.appendChild(row);
             });
-            
+
             elements.pointCount.textContent = points.length;
             elements.emptyState.style.display = points.length === 0 ? 'block' : 'none';
         }
@@ -505,11 +540,11 @@
                 alert('Potrebne su najmanje 2 tačke!');
                 return;
             }
-            
+
             console.log('📊 Računam:', currentMethod);
             elements.status.textContent = 'Računam...';
             elements.status.className = 'status-calculating';
-            
+
             try {
                 const response = await fetch('/interpolate', {
                     method: 'POST',
@@ -519,12 +554,12 @@
                         method: currentMethod
                     })
                 });
-                
+
                 const data = await response.json();
                 console.log('✅ Primljeno:', data.title);
-                
+
                 if (data.error) throw new Error(data.error);
-                
+
                 lastResponseData = data;
                 plotData(data);
                 displayPolynomialInfo(data);
@@ -532,7 +567,7 @@
                 elements.status.textContent = 'Spreman';
                 elements.status.className = 'status-ready';
                 elements.exportButtons.style.display = 'flex';
-                
+
             } catch (error) {
                 console.error('❌', error);
                 elements.status.textContent = 'Greška';
@@ -550,7 +585,7 @@
                 name: 'Interpolacija',
                 line: { color: '#2563eb', width: 3 }
             };
-            
+
             const trace2 = {
                 x: data.x_points,
                 y: data.y_points,
@@ -576,7 +611,7 @@
                 };
                 traces.unshift(traceReference);
             }
-            
+
             const layout = {
                 title: data.title,
                 xaxis: { title: 'X' },
@@ -591,14 +626,14 @@
                 const xMax = Math.max(...data.x_points);
                 layout.xaxis = { ...layout.xaxis, range: [xMin, xMax] };
             }
-            
+
             Plotly.newPlot(elements.plot, traces, layout, { responsive: true });
             console.log('📈 Graf ažuriran');
         }
 
         function displayPolynomialInfo(data) {
             let info = '';
-            
+
             if (currentMethod === 'lagrange' || currentMethod === 'barycentric') {
                 info = `<div class="polynomial-formula">Lagrangeov polinom stepena ${points.length - 1}
 Prolazi kroz sve ${points.length} tačke
@@ -621,7 +656,7 @@ Kontinuirana i glatka (C² kontinuitet)</div>`;
                 info += `<div class="polynomial-formula" style="margin-top: 8px;">Primjer: ${activeExample.name}
 ${activeExample.description}</div>`;
             }
-            
+
             elements.polynomialDisplay.innerHTML = info;
             elements.polynomialInfo.style.display = 'block';
         }
@@ -631,16 +666,16 @@ ${activeExample.description}</div>`;
                 alert('Potrebne su najmanje 2 tačke!');
                 return;
             }
-            
+
             elements.status.textContent = 'Poredim metode...';
             elements.status.className = 'status-calculating';
-            
+
             const methods = ['lagrange', 'newton', 'linear', 'spline', 'barycentric'];
             const results = [];
-            
+
             // Test tačka u sredini
             const xTest = (points[0].x + points[points.length - 1].x) / 2;
-            
+
             for (const method of methods) {
                 try {
                     const response = await fetch('/interpolate', {
@@ -651,13 +686,13 @@ ${activeExample.description}</div>`;
                             method: method
                         })
                     });
-                    
+
                     const data = await response.json();
-                    
+
                     // Nađi y vrijednost za xTest
                     const idx = data.x_plot.findIndex(x => x >= xTest);
                     const yValue = data.y_plot[idx];
-                    
+
                     results.push({
                         method: method,
                         name: getMethodName(method),
@@ -668,7 +703,7 @@ ${activeExample.description}</div>`;
                     console.error(`Greška za ${method}:`, e);
                 }
             }
-            
+
             displayComparison(results, xTest);
             elements.status.textContent = 'Spreman';
             elements.status.className = 'status-ready';
@@ -685,13 +720,13 @@ ${activeExample.description}</div>`;
                 </thead>
                 <tbody>
             `;
-            
+
             results.forEach(r => {
                 let type = '';
                 if (r.method === 'linear') type = 'Piecewise';
                 else if (r.method === 'spline') type = 'Kubni';
                 else type = 'Polinom';
-                
+
                 html += `
                     <tr>
                         <td><strong>${r.name}</strong></td>
@@ -700,9 +735,9 @@ ${activeExample.description}</div>`;
                     </tr>
                 `;
             });
-            
+
             html += '</tbody>';
-            
+
             document.getElementById('comparisonTable').innerHTML = html;
             elements.comparisonBox.style.display = 'block';
         }
@@ -712,7 +747,7 @@ ${activeExample.description}</div>`;
             points.forEach(p => {
                 csv += `${p.x},${p.y}\n`;
             });
-            
+
             const blob = new Blob([csv], { type: 'text/csv' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
@@ -724,7 +759,7 @@ ${activeExample.description}</div>`;
         function exportPython() {
             const xVals = points.map(p => p.x).join(', ');
             const yVals = points.map(p => p.y).join(', ');
-            
+
             const code = `# Interpolacija - NumericalMethods
 import matplotlib.pyplot as plt
 from scipy.interpolate import lagrange
@@ -750,7 +785,7 @@ plt.title('${getMethodName(currentMethod)}')
 plt.grid(True)
 plt.show()
 `;
-            
+
             const blob = new Blob([code], { type: 'text/plain' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
@@ -780,4 +815,5 @@ plt.show()
         }
     </script>
 </body>
+
 </html>
